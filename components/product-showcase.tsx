@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Link } from "react-router-dom"
 
 const products = [
   {
@@ -78,11 +79,13 @@ export function ProductShowcase() {
               <Card key={product.id} className="group hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="aspect-[3/4] mb-4 bg-gray-50 rounded-lg overflow-hidden">
-                    <img
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    <Link to={`/product/${product.id}`}>
+                      <img
+                        src={product.image || "/placeholder.svg"}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </Link>
                   </div>
 
                   <div className="space-y-2">
@@ -105,7 +108,9 @@ export function ProductShowcase() {
                       <span className="text-sm text-gray-500 line-through">{product.originalPrice}</span>
                     </div>
 
-                    <Button className="w-full bg-black hover:bg-zinc-800">View Details</Button>
+                    <Button asChild className="w-full bg-black text-white hover:bg-zinc-800">
+                      <Link to={`/product/${product.id}`}>View Details</Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

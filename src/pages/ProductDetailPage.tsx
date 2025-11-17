@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Star, Heart, ShoppingCart, Truck, Shield, RotateCcw, Plus, Minus, Share2 } from "lucide-react"
+import { products } from "@/src/data/products"
 
 function ProductDetailPage() {
   const { id } = useParams()
@@ -16,37 +17,8 @@ function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
 
-  // Mock product data - in a real app, this would be fetched based on the ID
-  const product = {
-    id: id || "1",
-    name: "Jasmine Sunset Eau de Parfum",
-    brand: "Lux by Sandy",
-    price: 189,
-    originalPrice: 249,
-    rating: 4.8,
-    reviewCount: 127,
-    description:
-      "A captivating blend of jasmine, bergamot, and warm amber that evokes the golden hour of a perfect sunset. This sophisticated fragrance opens with fresh citrus notes, develops into a heart of intoxicating jasmine, and settles into a warm, sensual base of amber and sandalwood.",
-    images: [
-      "/product-jasmine-sunset-main.jpg",
-      "/product-jasmine-sunset-bottle.jpg",
-      "/product-jasmine-sunset-packaging.jpg",
-      "/product-jasmine-sunset-lifestyle.jpg",
-    ],
-    sizes: [
-      { size: "30ml", price: 89, inStock: true },
-      { size: "50ml", price: 149, inStock: true },
-      { size: "100ml", price: 189, inStock: true, popular: true },
-    ],
-    inStock: true,
-    category: "Floral Oriental",
-    notes: {
-      top: ["Bergamot", "Pink Pepper", "Mandarin"],
-      heart: ["Jasmine", "Rose Petals", "Lily of the Valley"],
-      base: ["Amber", "Sandalwood", "White Musk"],
-    },
-    features: ["Long-lasting (8-10 hours)", "Cruelty-free", "Authentic ingredients", "Gift-ready packaging"],
-  }
+  // Resolve product by id from clothing dataset
+  const product = useMemo(() => products.find((p) => p.id === (id || "1")), [id])
 
   const reviews = [
     {
@@ -106,14 +78,15 @@ function ProductDetailPage() {
   }
 
   const handleAddToCart = () => {
+    if (!product) return
     console.log(`Added ${quantity} of ${product.name} to cart`)
   }
 
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: product.name,
-        text: product.description,
+        title: product?.name || "Product",
+        text: product?.description || "",
         url: window.location.href,
       })
     }
@@ -127,7 +100,7 @@ function ProductDetailPage() {
       <div className="bg-gray-50 py-4">
         <div className="container mx-auto px-4">
           <nav className="text-sm text-gray-600">
-            <span>Home</span> / <span>Fragrances</span> / <span className="text-gray-900">{product.name}</span>
+            <span>Home</span> / <span>Collections</span> / <span className="text-gray-900">{product?.name ?? "Product"}</span>
           </nav>
         </div>
       </div>
@@ -140,8 +113,8 @@ function ProductDetailPage() {
             <div className="space-y-4">
               <div className="aspect-square bg-gradient-to-br from-rose-100 to-orange-100 rounded-lg overflow-hidden relative">
                 <img
-                  src={product.images[selectedImage] || "/placeholder.svg"}
-                  alt={product.name}
+                  src={product?.images?.[selectedImage] || "/placeholder.svg"}
+                  alt={product?.name || "Product image"}
                   className="w-full h-full object-cover"
                 />
                 <Button
@@ -154,7 +127,7 @@ function ProductDetailPage() {
                 </Button>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {product.images.map((image, index) => (
+                {product?.images?.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
@@ -164,7 +137,7 @@ function ProductDetailPage() {
                   >
                     <img
                       src={image || "/placeholder.svg"}
-                      alt={`${product.name} ${index + 1}`}
+                      alt={`${product?.name || "Product"} ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -177,12 +150,12 @@ function ProductDetailPage() {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="outline" className="text-rose-600 border-rose-600">
-                    {product.category}
+                    {product?.category || "Collection"}
                   </Badge>
-                  {product.inStock && <Badge className="bg-green-100 text-green-800">In Stock</Badge>}
+                  {product?.inStock && <Badge className="bg-green-100 text-green-800">In Stock</Badge>}
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-                <p className="text-lg text-gray-600 mb-4">{product.brand}</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{product?.name}</h1>
+                <p className="text-lg text-gray-600 mb-4">KYN Collections</p>
 
                 {/* Rating */}
                 <div className="flex items-center gap-2 mb-4">
@@ -191,24 +164,24 @@ function ProductDetailPage() {
                       <Star
                         key={i}
                         className={`w-5 h-5 ${
-                          i < Math.floor(product.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                          product && i < Math.floor(product.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
                         }`}
                       />
                     ))}
                   </div>
                   <span className="text-sm text-gray-600">
-                    {product.rating} ({product.reviewCount} reviews)
+                    {product?.rating ?? 0} ({product?.reviewCount ?? 0} reviews)
                   </span>
                 </div>
 
                 {/* Price */}
                 <div className="flex items-center gap-3 mb-6">
-                  <span className="text-3xl font-bold text-gray-900">${product.price}</span>
-                  {product.originalPrice && (
+                  <span className="text-3xl font-bold text-gray-900">${product?.price ?? 0}</span>
+                  {product?.originalPrice && (
                     <span className="text-xl text-gray-500 line-through">${product.originalPrice}</span>
                   )}
-                  {product.originalPrice && (
-                    <Badge className="bg-red-100 text-red-800">Save ${product.originalPrice - product.price}</Badge>
+                  {product?.originalPrice && product?.price && (
+                    <Badge className="bg-red-100 text-red-800">Save ${Number(product.originalPrice) - Number(product.price)}</Badge>
                   )}
                 </div>
               </div>
@@ -217,20 +190,13 @@ function ProductDetailPage() {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3">Size</h3>
                 <div className="grid grid-cols-3 gap-3">
-                  {product.sizes.map((size) => (
+                  {product?.sizes?.map((size) => (
                     <button
-                      key={size.size}
-                      className={`p-3 border rounded-lg text-center relative ${
-                        size.popular ? "border-rose-600 bg-rose-50" : "border-gray-300 hover:border-gray-400"
-                      }`}
+                      key={size}
+                      className={`p-3 border rounded-lg text-center relative border-gray-300 hover:border-gray-400`}
                     >
-                      {size.popular && (
-                        <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-rose-600 text-white text-xs">
-                          Popular
-                        </Badge>
-                      )}
-                      <div className="font-semibold">{size.size}</div>
-                      <div className="text-sm text-gray-600">${size.price}</div>
+                      <div className="font-semibold">{size}</div>
+                      <div className="text-sm text-gray-600">Select</div>
                     </button>
                   ))}
                 </div>
@@ -300,17 +266,17 @@ function ProductDetailPage() {
             <Tabs defaultValue="description" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="notes">Fragrance Notes</TabsTrigger>
-                <TabsTrigger value="reviews">Reviews ({product.reviewCount})</TabsTrigger>
+                <TabsTrigger value="notes">Details</TabsTrigger>
+                <TabsTrigger value="reviews">Reviews ({product?.reviewCount ?? 0})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="description" className="mt-6">
                 <Card>
                   <CardContent className="p-6">
-                    <p className="text-gray-700 leading-relaxed mb-6">{product.description}</p>
+                    <p className="text-gray-700 leading-relaxed mb-6">{product?.description}</p>
                     <h4 className="font-semibold text-gray-900 mb-3">Key Features:</h4>
                     <ul className="space-y-2">
-                      {product.features.map((feature, index) => (
+                      {["Premium materials","Tailored finish","Designed for comfort"].map((feature, index) => (
                         <li key={index} className="flex items-center gap-2 text-gray-700">
                           <div className="w-2 h-2 bg-rose-600 rounded-full"></div>
                           {feature}
@@ -326,33 +292,29 @@ function ProductDetailPage() {
                   <CardContent className="p-6">
                     <div className="space-y-6">
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">Top Notes</h4>
+                        <h4 className="font-semibold text-gray-900 mb-3">Fabric</h4>
                         <div className="flex flex-wrap gap-2">
-                          {product.notes.top.map((note) => (
-                            <Badge key={note} variant="outline" className="text-rose-600 border-rose-600">
-                              {note}
-                            </Badge>
-                          ))}
+                          <Badge variant="outline" className="text-rose-600 border-rose-600">
+                            {product?.details?.fabric || "Varies by style"}
+                          </Badge>
                         </div>
                       </div>
                       <Separator />
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">Heart Notes</h4>
+                        <h4 className="font-semibold text-gray-900 mb-3">Fit</h4>
                         <div className="flex flex-wrap gap-2">
-                          {product.notes.heart.map((note) => (
-                            <Badge key={note} variant="outline" className="text-rose-600 border-rose-600">
-                              {note}
-                            </Badge>
-                          ))}
+                          <Badge variant="outline" className="text-rose-600 border-rose-600">
+                            {product?.details?.fit || "True to size"}
+                          </Badge>
                         </div>
                       </div>
                       <Separator />
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">Base Notes</h4>
+                        <h4 className="font-semibold text-gray-900 mb-3">Care</h4>
                         <div className="flex flex-wrap gap-2">
-                          {product.notes.base.map((note) => (
-                            <Badge key={note} variant="outline" className="text-rose-600 border-rose-600">
-                              {note}
+                          {(product?.details?.care || ["Dry clean only"]).map((c) => (
+                            <Badge key={c} variant="outline" className="text-rose-600 border-rose-600">
+                              {c}
                             </Badge>
                           ))}
                         </div>
