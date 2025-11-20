@@ -122,7 +122,7 @@ export function WhereLoveMeetsLuxury() {
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button asChild size="sm" className="bg-white text-gray-900 hover:bg-gray-100">
-                  <Link href={activeCollection.href}>Explore This Edit</Link>
+                  <Link to={activeCollection.href}>Explore This Edit</Link>
                 </Button>
                 {activeCollection.lookbookHref ? (
                   <Button
@@ -131,7 +131,7 @@ export function WhereLoveMeetsLuxury() {
                     variant="outline"
                     className="border-white/40 bg-transparent text-white hover:bg-white/10"
                   >
-                    <Link href={activeCollection.lookbookHref}>View Lookbook</Link>
+                    <Link to={activeCollection.lookbookHref}>View Lookbook</Link>
                   </Button>
                 ) : null}
               </div>
@@ -174,7 +174,7 @@ export function WhereLoveMeetsLuxury() {
 
         <div className="mt-12 flex justify-center">
           <Button asChild variant="outline" size="lg" className="px-8">
-            <Link href="/collections">Browse Full Catalog</Link>
+            <Link to="/collections">Browse Full Catalog</Link>
           </Button>
         </div>
       </div>
