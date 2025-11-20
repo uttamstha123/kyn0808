@@ -1,6 +1,6 @@
 "use client"
 import { useMemo, useState } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate, Link } from "react-router-dom"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -8,14 +8,21 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { Star, Heart, ShoppingCart, Truck, Shield, RotateCcw, Plus, Minus, Share2 } from "lucide-react"
+import { Star, Heart, ShoppingCart, Truck, Shield, RotateCcw, Plus, Minus, Share2, Check } from "lucide-react"
 import { products } from "@/src/data/products"
+import { useCart } from "@/src/context/CartContext"
+import { useToast } from "@/hooks/use-toast"
 
 function ProductDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { addToCart } = useCart()
+  const { toast } = useToast()
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
+  const [selectedSize, setSelectedSize] = useState<string>("")
+  const [selectedColor, setSelectedColor] = useState<string>("")
 
   // Resolve product by id from clothing dataset
   const product = useMemo(() => products.find((p) => p.id === (id || "1")), [id])
@@ -79,7 +86,35 @@ function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product) return
-    console.log(`Added ${quantity} of ${product.name} to cart`)
+    
+    if (!selectedSize) {
+      toast({
+        title: "Please select a size",
+        description: "Choose a size before adding to cart",
+        variant: "destructive",
+      })
+      return
+    }
+
+    addToCart(product, quantity, selectedSize, selectedColor)
+    toast({
+      title: "Added to cart!",
+      description: `${quantity}x ${product.name} (Size: ${selectedSize})`,
+    })
+  }
+
+  const handleBuyNow = () => {
+    if (!product || !selectedSize) {
+      toast({
+        title: "Please select a size",
+        description: "Choose a size before proceeding",
+        variant: "destructive",
+      })
+      return
+    }
+
+    addToCart(product, quantity, selectedSize, selectedColor)
+    navigate("/cart")
   }
 
   const handleShare = () => {
@@ -188,19 +223,52 @@ function ProductDetailPage() {
 
               {/* Size Selection */}
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Size</h3>
-                <div className="grid grid-cols-3 gap-3">
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  Size {!selectedSize && <span className="text-red-500 text-sm">*</span>}
+                </h3>
+                <div className="grid grid-cols-5 gap-3">
                   {product?.sizes?.map((size) => (
                     <button
                       key={size}
-                      className={`p-3 border rounded-lg text-center relative border-gray-300 hover:border-gray-400`}
+                      onClick={() => setSelectedSize(size)}
+                      className={`p-3 border rounded-lg text-center relative transition-all ${
+                        selectedSize === size
+                          ? "border-rose-600 bg-rose-50 text-rose-600"
+                          : "border-gray-300 hover:border-gray-400"
+                      }`}
                     >
                       <div className="font-semibold">{size}</div>
-                      <div className="text-sm text-gray-600">Select</div>
+                      {selectedSize === size && (
+                        <Check className="w-4 h-4 absolute top-1 right-1 text-rose-600" />
+                      )}
                     </button>
                   ))}
                 </div>
               </div>
+
+              {/* Color Selection */}
+              {product?.colors && product.colors.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3">
+                    Color {selectedColor && <span className="text-sm text-gray-600">- {selectedColor}</span>}
+                  </h3>
+                  <div className="flex gap-3">
+                    {product.colors.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => setSelectedColor(color)}
+                        className={`px-4 py-2 border rounded-lg transition-all ${
+                          selectedColor === color
+                            ? "border-rose-600 bg-rose-50 text-rose-600"
+                            : "border-gray-300 hover:border-gray-400"
+                        }`}
+                      >
+                        {color}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Quantity and Add to Cart */}
               <div className="space-y-4">
@@ -224,18 +292,23 @@ function ProductDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  <Button onClick={handleAddToCart} className="flex-1 bg-rose-600 hover:bg-rose-700">
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Add to Cart
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setIsFavorite(!isFavorite)}
-                    className={isFavorite ? "text-red-500 border-red-500" : ""}
-                  >
-                    <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <Button onClick={handleAddToCart} className="flex-1 bg-rose-600 hover:bg-rose-700 h-12">
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      Add to Cart
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setIsFavorite(!isFavorite)}
+                      className={`h-12 w-12 ${isFavorite ? "text-red-500 border-red-500" : ""}`}
+                    >
+                      <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
+                    </Button>
+                  </div>
+                  <Button onClick={handleBuyNow} variant="outline" className="w-full h-12 border-2 border-rose-600 text-rose-600 hover:bg-rose-50">
+                    Buy Now
                   </Button>
                 </div>
               </div>
